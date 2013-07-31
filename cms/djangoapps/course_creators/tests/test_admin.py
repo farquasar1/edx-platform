@@ -43,14 +43,14 @@ class CourseCreatorAdminTest(TestCase):
         """
         Tests that updates to state impact the creator group maintained in authz.py and that e-mails are sent.
         """
-        STUDIO_REQUEST_EMAIL = 'mark@marky.mark' 
-        
+        STUDIO_REQUEST_EMAIL = 'mark@marky.mark'
+
         def change_state(state, is_creator):
             """ Helper method for changing state """
             self.table_entry.state = state
             self.creator_admin.save_model(self.request, self.table_entry, None, True)
             self.assertEqual(is_creator, is_user_in_creator_group(self.user))
-            
+
             context = {'studio_request_email': STUDIO_REQUEST_EMAIL}
             if state == CourseCreator.GRANTED:
                 template = 'emails/course_creator_granted.txt'
@@ -106,3 +106,12 @@ class CourseCreatorAdminTest(TestCase):
 
         self.request.user = self.user
         self.assertFalse(self.creator_admin.has_change_permission(self.request))
+
+    def test_rate_limit_login(self):
+        with mock.patch.dict('django.conf.settings.MITX_FEATURES', {'ENABLE_CREATOR_GROUP': True}):
+            post_params = {'username': self.user.username, 'password': 'wrong_password'}
+            for i in xrange(30):
+                self.client.post('/admin/', post_params)
+
+            response = self.client.post('/admin/', post_params)
+            self.assertEquals(response.status_code, 403)

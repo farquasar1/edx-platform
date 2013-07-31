@@ -72,7 +72,7 @@ MITX_FEATURES = {
     'ENABLE_TEXTBOOK': True,
     'ENABLE_DISCUSSION_SERVICE': True,
     # discussion home panel, which includes a subscription on/off setting for discussion digest emails.
-    # this should remain off in production until digest notifications are online. 
+    # this should remain off in production until digest notifications are online.
     'ENABLE_DISCUSSION_HOME_PANEL': False,
 
     'ENABLE_PSYCHOMETRICS': False,  # real-time psychometrics (eg item response theory analysis in instructor dashboard)
@@ -233,6 +233,12 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
     # Hack to get required link URLs to password reset templates
     'mitxmako.shortcuts.marketing_link_context_processor',
+)
+
+
+# use the ratelimit backend to prevent brute force attacks
+AUTHENTICATION_BACKENDS = (
+    'ratelimitbackend.backends.RateLimitModelBackend',
 )
 
 # add csrf support unless disabled for load testing
@@ -437,10 +443,10 @@ OPEN_ENDED_GRADING_INTERFACE = {
     'url': 'http://sandbox-grader-001.m.edx.org/peer_grading',
     'username': 'incorrect_user',
     'password': 'incorrect_pass',
-    'staff_grading' : 'staff_grading',
-    'peer_grading' : 'peer_grading',
-    'grading_controller' : 'grading_controller'
-    }
+    'staff_grading': 'staff_grading',
+    'peer_grading': 'peer_grading',
+    'grading_controller': 'grading_controller'
+}
 
 # Used for testing, debugging peer grading
 MOCK_PEER_GRADING = False
@@ -491,6 +497,9 @@ MIDDLEWARE_CLASSES = (
 
     'django_comment_client.utils.ViewNameMiddleware',
     'codejail.django_integration.ConfigureCodeJailMiddleware',
+
+    # catches any uncaught RateLimitExceptions and returns a 403 instead of a 500
+    'ratelimitbackend.middleware.RateLimitMiddleware'
 )
 
 # add in csrf middleware unless disabled for load testing

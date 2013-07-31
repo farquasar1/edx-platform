@@ -41,6 +41,7 @@ from openid.server.trustroot import TrustRoot
 from openid.extensions import ax, sreg
 
 import student.views as student_views
+from ratelimitbackend.exceptions import RateLimitException
 # Required for Pearson
 from courseware.views import get_module_for_descriptor, jump_to
 from courseware.model_data import ModelDataCache
@@ -48,6 +49,8 @@ from xmodule.modulestore.django import modulestore
 from xmodule.course_module import CourseDescriptor
 from xmodule.modulestore import Location
 from xmodule.modulestore.exceptions import ItemNotFoundError
+
+import warnings
 
 log = logging.getLogger("mitx.external_auth")
 
@@ -187,7 +190,10 @@ def external_login_or_signup(request,
         log.info('SHIB: Logging in linked user %s', user.email)
     else:
         uname = internal_user.username
-        user = authenticate(username=uname, password=eamap.internal_password)
+        # we are deliberately not passing in the request, so we need to
+        # suppress warnings from the backend about not passing in the request
+        with warnings.catch_warnings():
+            user = authenticate(username=uname, password=eamap.internal_password)
     if user is None:
         log.warning("External Auth Login failed for %s / %s",
                     uname, eamap.internal_password)
@@ -709,7 +715,12 @@ def provider_login(request):
         # Failure is again redirected to the login dialog.
         username = user.username
         password = request.POST.get('password', None)
-        user = authenticate(username=username, password=password)
+        try:
+            user = authenticate(username=username, password=password, request=request)
+        except RateLimitException:
+            log.warning('OpendID - Too many failed login attempts.')
+            return HttpResponseRedirect(openid_request_url)
+
         if user is None:
             request.session['openid_error'] = True
             msg = "OpenID login failed - password for %s is invalid"
