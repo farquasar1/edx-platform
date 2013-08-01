@@ -8,6 +8,7 @@
       videoPlayer = state.videoPlayer;
       videoCaption = state.videoCaption;
       videoSpeedControl = state.videoSpeedControl;
+      videoControl = state.videoControl;
     }
 
     beforeEach(function() {
@@ -71,6 +72,11 @@
           expect($('.subtitles')).toHandleWith('mousemove', videoCaption.onMovement);
           expect($('.subtitles')).toHandleWith('mousewheel', videoCaption.onMovement);
           expect($('.subtitles')).toHandleWith('DOMMouseScroll', videoCaption.onMovement);
+        });
+
+        it('bind the scroll', function() {
+          expect($('.subtitles')).toHandleWith('scroll', videoCaption.autoShowCaptions);
+          expect($('.subtitles')).toHandleWith('scroll', videoControl.showControls);
         });
       });
 
