@@ -396,13 +396,15 @@ function () {
     function setSubtitlesHeight() {
         var height = 0;
         if (this.videoType === 'html5'){
-            if  ( (this.captionsHidden === undefined && this.hide_captions === true ) ||
-                  (this.captionsHidden === true) ) {
+            // on page load captionHidden = undefined
+            if  (
+                (this.captionsHidden === undefined && this.hide_captions === true ) ||
+                (this.captionsHidden === true) ) {
                 // In case of html5 autoshowing subtitles,
                 // we ajdust height of subs, by height of scrollbar
                 height = this.videoControl.el.height() + 0.5 * this.videoControl.sliderEl.height();
                 // height of videoControl does not contain height of slider.
-                // (css is set to absolute, to avoid yanking when slider autochanges its height) 
+                // (css is set to absolute, to avoid yanking when slider autochanges its height)
             }
         }
         this.videoCaption.subtitlesEl.css({
